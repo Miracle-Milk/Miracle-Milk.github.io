@@ -1,129 +1,82 @@
-var canvasEl = document.querySelector('.fireworks')
-if (canvasEl) {
-  var ctx = canvasEl.getContext('2d')
-  var numberOfParticules = 30
-  var pointerX = 0
-  var pointerY = 0
-  // var tap = ('ontouchstart' in window || navigator.msMaxTouchPoints) ? 'touchstart' : 'mousedown'
-  // Fixed the mobile scroll
-  var tap = 'mousedown'
-  var colors = ['#FF1461', '#18FF92', '#5A87FF', '#FBF38C']
-
-  var setCanvasSize = debounce(function () {
-    canvasEl.width = window.innerWidth
-    canvasEl.height = window.innerHeight
-    canvasEl.style.width = window.innerWidth + 'px'
-    canvasEl.style.height = window.innerHeight + 'px'
-    canvasEl.getContext('2d').scale(1, 1)
-  }, 500)
-
-  var render = anime({
-    duration: Infinity,
-    update: function () {
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height)
-    }
-  })
-
-  document.addEventListener(tap, function (e) {
-    if (e.target.id !== 'sidebar' && e.target.id !== 'toggle-sidebar' && e.target.nodeName !== 'A' && e.target.nodeName !== 'IMG') {
-      render.play()
-      updateCoords(e)
-      animateParticules(pointerX, pointerY)
-    }
-  }, false)
-
-  setCanvasSize()
-  window.addEventListener('resize', setCanvasSize, false)
-}
-
-function updateCoords (e) {
-  pointerX = (e.clientX || e.touches[0].clientX) - canvasEl.getBoundingClientRect().left
-  pointerY = e.clientY || e.touches[0].clientY - canvasEl.getBoundingClientRect().top
-}
-
-function setParticuleDirection (p) {
-  var angle = anime.random(0, 360) * Math.PI / 180
-  var value = anime.random(50, 180)
-  var radius = [-1, 1][anime.random(0, 1)] * value
-  return {
-    x: p.x + radius * Math.cos(angle),
-    y: p.y + radius * Math.sin(angle)
-  }
-}
-
-function createParticule (x, y) {
-  var p = {}
-  p.x = x
-  p.y = y
-  p.color = colors[anime.random(0, colors.length - 1)]
-  p.radius = anime.random(16, 32)
-  p.endPos = setParticuleDirection(p)
-  p.draw = function () {
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true)
-    ctx.fillStyle = p.color
-    ctx.fill()
-  }
-  return p
-}
-
-function createCircle (x, y) {
-  var p = {}
-  p.x = x
-  p.y = y
-  p.color = '#F00'
-  p.radius = 0.1
-  p.alpha = 0.5
-  p.lineWidth = 6
-  p.draw = function () {
-    ctx.globalAlpha = p.alpha
-    ctx.beginPath()
-    ctx.arc(p.x, p.y, p.radius, 0, 2 * Math.PI, true)
-    ctx.lineWidth = p.lineWidth
-    ctx.strokeStyle = p.color
-    ctx.stroke()
-    ctx.globalAlpha = 1
-  }
-  return p
-}
-
-function renderParticule (anim) {
-  for (var i = 0; i < anim.animatables.length; i++) {
-    anim.animatables[i].target.draw()
-  }
-}
-
-function animateParticules (x, y) {
-  var circle = createCircle(x, y)
-  var particules = []
-  for (var i = 0; i < numberOfParticules; i++) {
-    particules.push(createParticule(x, y))
-  }
-  anime.timeline().add({
-    targets: particules,
-    x: function (p) {
-      return p.endPos.x
-    },
-    y: function (p) {
-      return p.endPos.y
-    },
-    radius: 0.1,
-    duration: anime.random(1200, 1800),
-    easing: 'easeOutExpo',
-    update: renderParticule
-  })
-    .add({
-      targets: circle,
-      radius: anime.random(80, 160),
-      lineWidth: 0,
-      alpha: {
-        value: 0,
-        easing: 'linear',
-        duration: anime.random(600, 800)
-      },
-      duration: anime.random(1200, 1800),
-      easing: 'easeOutExpo',
-      update: renderParticule,
-      offset: 0
-    })
-}
+// ==UserScript==
+// @name         鼠标点击冒泡
+// @namespace    https://djzhao.js.org
+// @version      0.1
+// @description  一个用JS写的鼠标左击特效
+// @description  一些Emoji 😀😃😄😁😆😅😂🤣☺😊😚😙😗😘😍😌😉🙃🙂😇😋😜😝😛🤑🤗🤓😎🤡🤠😖😣☹🙁😕😟😔😞😒😏😫😩😤😠😡😶😐😑😯😦😥😢😨😱😳😵😲😮😧🤤😭😪😴🙄🤔😬🤥🤐💩👺👹👿😈🤕🤒😷🤧🤢👻💀☠👽👾🤖🎃😺😸😹🙏👏🙌👐😾😿🙀😽😼😻
+// @author       一碗单炒饭
+// @include      /[a-zA-z]+://[^\s]*/
+// @run-at       document_start
+// ==/UserScript==
+onload = function() {
+    var click_cnt = 0;
+    var $html = document.getElementsByTagName("html")[0];
+    var $body = document.getElementsByTagName("body")[0];
+    $html.onclick = function(e) {
+        var $elem = document.createElement("b");
+        $elem.style.color = "#E94F06";
+        $elem.style.zIndex = 9999;
+        $elem.style.position = "absolute";
+        $elem.style.select = "none";
+        var x = e.pageX;
+        var y = e.pageY;
+        $elem.style.left = (x - 10) + "px";
+        $elem.style.top = (y - 20) + "px";
+        clearInterval(anim);
+        switch (++click_cnt) {
+            case 10:
+                $elem.innerText = "OωO";
+                break;
+            case 20:
+                $elem.innerText = "(๑•́ ∀ •̀๑)";
+                break;
+            case 30:
+                $elem.innerText = "(๑•́ ₃ •̀๑)";
+                break;
+            case 40:
+                $elem.innerText = "(๑•̀_•́๑)";
+                break;
+            case 50:
+                $elem.innerText = "（￣へ￣）";
+                break;
+            case 60:
+                $elem.innerText = "(╯°口°)╯(┴—┴";
+                break;
+            case 70:
+                $elem.innerText = "૮( ᵒ̌皿ᵒ̌ )ა";
+                break;
+            case 80:
+                $elem.innerText = "╮(｡>口<｡)╭";
+                break;
+            case 90:
+                $elem.innerText = "( ง ᵒ̌皿ᵒ̌)ง⁼³₌₃";
+                break;
+            case 100:
+            case 101:
+            case 102:
+            case 103:
+            case 104:
+            case 105:
+                $elem.innerText = "(ꐦ°᷄д°᷅)";
+                break;
+            default:
+    // 手动更换下面这行双引号里面的内容 如"😀"
+                $elem.innerText = "🐾";
+                break;
+        }
+        $elem.style.fontSize = Math.random() * 20 + 16 + "px";
+        var increase = 0;
+        var anim;
+        setTimeout(function() {
+          anim = setInterval(function() {
+              if (++increase == 150) {
+                  clearInterval(anim);
+      $body.removeChild($elem);
+              }
+              $elem.style.top = y - 20 - increase + "px";
+              $elem.style.opacity = (150 - increase) / 120;
+          }, 8);
+        }, 70);
+        $body.appendChild($elem);
+    };
+};
